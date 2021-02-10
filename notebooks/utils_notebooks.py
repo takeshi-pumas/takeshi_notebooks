@@ -72,7 +72,8 @@ class RGBD():
         x = np.average(self._points_data['x'][y_idx, x_idx])
         y = np.average(self._points_data['y'][y_idx, x_idx])
         z = np.average(self._points_data['z'][y_idx, x_idx])
-        self._xyz = [x, y, z]
+        self._xyz = [y, x, z]
+        #self._xyz = [x, y, z]
 
         # 座標の名前が設定されてなければ処理を終える
         if self._frame_name is None:
