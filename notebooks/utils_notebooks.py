@@ -135,7 +135,7 @@ def spawn_object(gazebo_name, name, x, y, z, yaw):
     global _path_xml, _path_model
     _path_xml = "/home/oscar/Codes/ycb_ws/src/robot_object_views/robotobject/models/MODEL_NAME/model-1_4.sdf"
     _path_model = "/home/oscar/Codes/ycb_ws/src/robot_object_views/robotobject/models"
-
+    
     model_database_template = """<sdf version="1.4">
       <world name="default">
         <include>
@@ -150,9 +150,9 @@ def spawn_object(gazebo_name, name, x, y, z, yaw):
     initial_pose.position.z = z
     roll = 0.0
     pitch = 0.0
-    yaw = 0.0
     q = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
     initial_pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+    rospy.loginfo('Spawn: {0}'.format(q))
 
     path_xml = _path_xml.replace('MODEL_NAME', name)
 
