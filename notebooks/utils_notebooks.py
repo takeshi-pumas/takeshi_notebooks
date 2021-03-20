@@ -131,11 +131,11 @@ def delete_object(name):
     
     
 
-def spawn_object(gazebo_name, name, x, y, z, yaw):
+def spawn_object(gazebo_name, name, x, y, z, yaw,roll=0.0 , pitch=0.0):
     global _path_xml, _path_model
-    _path_xml = "/home/oscar/Codes/ycb_ws/src/robot_object_views/robotobject/models/MODEL_NAME/model-1_4.sdf"
-    _path_model = "/home/oscar/Codes/ycb_ws/src/robot_object_views/robotobject/models"
-    
+    _path_xml = '/home/oscar/Codes/catkin_mio_ws/src/tmc_wrs_gazebo_world/models/MODEL_NAME/model-1_4.sdf'
+    _path_model = '/home/oscar/Codes/catkin_mio_ws/src/tmc_wrs_gazebo_world/models/'
+                
     model_database_template = """<sdf version="1.4">
       <world name="default">
         <include>
@@ -148,8 +148,8 @@ def spawn_object(gazebo_name, name, x, y, z, yaw):
     initial_pose.position.x = x
     initial_pose.position.y = y
     initial_pose.position.z = z
-    roll = 0.0
-    pitch = 0.0
+    
+    
     q = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
     initial_pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
     rospy.loginfo('Spawn: {0}'.format(q))
