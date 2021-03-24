@@ -4,17 +4,19 @@ import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist , PointStamped , Point
 from nav_msgs.msg import Odometry
-from tf.transformations import euler_from_quaternion
 from sensor_msgs.msg import LaserScan
+from tf.transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker , MarkerArray
 import numpy as np
 import pandas as pd
 import ros_numpy
 from gazebo_ros import gazebo_interface
 
+import moveit_commander
+import moveit_msgs.msg
+
 import actionlib
 import subprocess
-
 
 from geometry_msgs.msg import PoseStamped, Quaternion, TransformStamped, Twist , Pose
 from IPython.display import Image
@@ -136,13 +138,6 @@ def spawn_object(gazebo_name, name, x, y, z, yaw,roll=0.0 , pitch=0.0):
     _path_xml = '/home/oscar/Codes/catkin_mio_ws/src/tmc_wrs_gazebo_world/models/MODEL_NAME/model-1_4.sdf'
     _path_model = '/home/oscar/Codes/catkin_mio_ws/src/tmc_wrs_gazebo_world/models/'
                 
-    model_database_template = """<sdf version="1.4">
-      <world name="default">
-        <include>
-          <uri>model://MODEL_NAME</uri>
-        </include>
-      </world>
-    </sdf>"""
     rospy.loginfo('Spawn: {0}'.format(name))
     initial_pose = Pose()
     initial_pose.position.x = x
@@ -163,18 +158,14 @@ def spawn_object(gazebo_name, name, x, y, z, yaw,roll=0.0 , pitch=0.0):
 
     gazebo_interface.spawn_sdf_model_client(gazebo_name, model_xml, rospy.get_namespace(),
                                             initial_pose, "", "/gazebo")
-    
 def gazebo_2_world(x,y):
 
-    x_world= x+2.0
-    y_world= y-1.0
+    x_world= x+2.1
+    y_world= -(y-1.2)
     return (x_world,y_world)
 
-def world_2_gazebo(x_world,y_world):
+def world_2_gazebo(y_world , x_world):
 
-    x= ( x_world - 2.5)
-    y= (-y_world + 1.5) 
+    x= ( x_world - 2.1)
+    y= (-y_world + 1.2) 
     return (x , y)
-
- #####SPAWN OBJECTS
-
