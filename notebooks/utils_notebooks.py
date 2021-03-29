@@ -169,3 +169,16 @@ def world_2_gazebo(y_world , x_world):
     x= ( x_world - 2.1)
     y= (-y_world + 1.2) 
     return (x , y)
+def find_2nd_biggest_contour_ix(contours):
+    if (len(contours) >= 2):
+        
+        areas=[]
+        for c in contours:
+            M= cv2.moments(c)
+            areas.append(M['m00'])
+        ser=pd.Series(areas)
+        ser.sort_values(ascending=False,inplace=True)
+        return ser.index[1]
+    else:
+        print('only one contour')
+        return (0)
