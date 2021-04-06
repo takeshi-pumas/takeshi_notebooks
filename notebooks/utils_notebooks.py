@@ -182,3 +182,8 @@ def find_2nd_biggest_contour_ix(contours):
     else:
         print('only one contour')
         return (0)
+def pad_digit_num(num,length):
+    text_num=''
+    for i in range(length -len(str(num))):
+        text_num=text_num+'0'
+    return(text_num+str(num))
