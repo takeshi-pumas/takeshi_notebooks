@@ -1,4 +1,5 @@
 notebooks/.ipynb_checkpoints/*
 .ipynb_checkpoints/
 notebooks/utils_notebooks.pyc
+notebooks/utils_notebooks.py
 
