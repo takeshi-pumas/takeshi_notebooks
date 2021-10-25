@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import ros_numpy
 from gazebo_ros import gazebo_interface
-
+from sklearn.decomposition import PCA
+import math as m
 import moveit_commander
 import moveit_msgs.msg
 
@@ -23,7 +24,7 @@ from IPython.display import Image
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from sensor_msgs.msg import LaserScan, PointCloud2
 import sys
-sys.path.remove('/opt/ros/melodic/lib/python2.7/dist-packages')
+#sys.path.remove('/opt/ros/melodic/lib/python2.7/dist-packages')
 import cv2 
 
 
@@ -189,3 +190,6 @@ def pad_digit_num(num,length):
     for i in range(length -len(str(num))):
         text_num=text_num+'0'
     return(text_num+str(num))
+
+
+
