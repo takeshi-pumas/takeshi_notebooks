@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from utils import *
+#from utils import *
 import moveit_msgs.msg
 #from gazebo_ros import gazebo_interface
-import smach
 import matplotlib.pyplot as plt
 
 
-##### Publishers #####
-scene_pub = rospy.Publisher('planning_scene', moveit_msgs.msg.PlanningScene, queue_size = 5)
+
 
 ##### KNOWN LOCATIONS #####
 kl_mess1 = [1.04, 0.3, 90]
@@ -74,37 +72,6 @@ grasped=[0.12814103131904275,
  0.21972794406396456,
  0.13252877558892262,
  -0.30672794406396453]
-
-
-
-########## Base Class for takeshi state machine ##########
-class Takeshi_states(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes = ['succ', 'failed', 'tries'])
-        self.tries = 1
-        self.max_tries = 5
-    
-    #This function must be overwritten
-    def takeshi_run(self):
-        print("Takeshi execute")
-        success = True        
-        return success
-
-    def execute(self, userdata):
-        #rospy.loginfo('STATE : INITIAL')
-        print("Excecuting Takeshi State: " + self.__class__.__name__)
-        print('Try', self.tries, 'of 5 attempts')
-        succ = self.takeshi_run()
-        if succ: 
-            print('success')            
-            return 'succ'
-        else:
-            print('failed')
-            self.tries += 1
-            if self.tries > self.max_tries:
-                return 'tries'
-            else:
-                return 'failed'
 
 
 ########## Util Functions ##########

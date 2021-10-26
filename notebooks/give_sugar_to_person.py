@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from std_srvs.srv import Empty
 import smach
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import PoseStamped, Point , Quaternion
@@ -143,6 +143,7 @@ class Initial(smach.State):
         rospy.loginfo('STATE : robot neutral pose')
         print('Try',self.tries,'of 5 attepmpts') 
         self.tries+=1
+        clear_octo_client()
         scene.remove_world_object()
         #Takeshi neutral
         arm.set_named_target('go')
@@ -160,16 +161,16 @@ class Initial(smach.State):
 ##### Define state SCAN_TABLE #####
 class Goto_table(smach.State):
     def __init__(self):
-        smach.State.__init__(self,outcomes=['succ','failed','tries'],input_keys=['counter_in'],output_keys=['counter_out'])
+        smach.State.__init__(self,outcomes=['succ','failed','tries','end'],input_keys=['counter_in'],output_keys=['counter_out'])
         self.tries=0
     def execute(self,userdata):
         self.tries+=1
-        if self.tries==3:
-            self.tries=0 
-            return'tries'
+        
         global cents, rot, trans
         
         userdata.counter_out=userdata.counter_in +1
+        if (userdata.counter_in>  2 ):
+            return 'end'
 
         #goal_x , goal_y, goal_yaw = kl_table1
         #move_base_goal(goal_x+.25*self.tries, goal_y , goal_yaw)      
@@ -178,6 +179,9 @@ class Goto_table(smach.State):
         goal_x = 0.1
         goal_y = 1.2
         goal_yaw = 1.57
+        goal_xyz=np.asarray((goal_x,goal_y,goal_yaw))
+        
+
 
         # fill ROS message
         pose = PoseStamped()
@@ -187,6 +191,8 @@ class Goto_table(smach.State):
         quat = tf.transformations.quaternion_from_euler(0, 0, goal_yaw)
         pose.pose.orientation = Quaternion(*quat)
 
+
+        # create a MOVE BASE GOAL
         goal = MoveBaseGoal()
         goal.target_pose = pose
 
@@ -200,13 +206,25 @@ class Goto_table(smach.State):
         action_state = navclient.get_state()
         print (action_state)
 
+        xyz=whole_body.get_current_joint_values()[:3]
 
-
+        print ('goal is ',goal_xyz,'current',xyz)
+        print ('Distance is ' ,np.linalg.norm(xyz-goal_xyz))
+        if (np.linalg.norm(xyz-goal_xyz)  < .3):
+            rospy.loginfo("Navigation Close Enough.")
+            return 'succ'
         if action_state == GoalStatus.SUCCEEDED:
             rospy.loginfo("Navigation Succeeded.")
             return 'succ'
+        
+        if self.tries==5:
+            self.tries=0 
+            return'tries'
+
         else:
             return'failed'
+
+
     
 
 
@@ -258,12 +276,13 @@ class Goto_person(smach.State):
         self.tries=0
     def execute(self,userdata):
         self.tries+=1
-        if self.tries==3:
+        if self.tries==4:
             self.tries=0 
             return'tries'
         goal_x = 0.6
         goal_y = 3.3
         goal_yaw = 2*1.57
+        goal_xyz=np.asarray((goal_x,goal_y,goal_yaw))
 
         # fill ROS message
         pose = PoseStamped()
@@ -285,7 +304,13 @@ class Goto_person(smach.State):
         # print result of navigation
         action_state = navclient.get_state()
         print(action_state)
+        xyz=whole_body.get_current_joint_values()[:3]
         rospy.loginfo (str(whole_body.get_current_joint_values()[:2]))
+        print ('goal is ',goal_xyz,'current',xyz)
+        print ('Distance is ' ,np.linalg.norm(xyz-goal_xyz))
+        if (np.linalg.norm(xyz-goal_xyz)  < .3):
+            rospy.loginfo("Navigation Close Enough.")
+            return 'succ'
 
         if action_state == GoalStatus.SUCCEEDED:
             rospy.loginfo("Navigation Succeeded.")
@@ -300,6 +325,20 @@ class Give_object(smach.State):
         self.tries=0
     def execute(self,userdata):
         self.tries+=1
+        
+
+        ###### MOVEIT IT IS A BIT COMPLEX FOR IN CODE COMMENTS; PLEASE CONTACT 
+        ######## we are seting all the joints in the "whole body " command group to a known value
+        #######  conveniently named give object
+        #######   before using  clearing the octomap service might be needed
+
+
+
+        clear_octo_client()
+        wb_give_object=[0.57, 3.26, 3.10, 0.057,-0.822,-0.0386, -0.724, 0.0, 0.0]
+        whole_body.set_joint_value_target(wb_give_object)
+        whole_body.go()
+
         print ('yey')
         return 'succ'
 
@@ -316,7 +355,7 @@ class Give_object(smach.State):
 
 #Initialize global variables and node
 def init(node_name):
-    global listener, broadcaster, tfBuffer, tf_static_broadcaster, scene, rgbd  , head,whole_body,arm  ,goal,navclient
+    global listener, broadcaster, tfBuffer, tf_static_broadcaster, scene, rgbd  , head,whole_body,arm  ,goal,navclient,clear_octo_client
     rospy.init_node(node_name)
     head = moveit_commander.MoveGroupCommander('head')
     whole_body=moveit_commander.MoveGroupCommander('whole_body_weighted')
@@ -330,23 +369,10 @@ def init(node_name):
     rgbd = RGBD()
     goal = MoveBaseGoal()
     navclient = actionlib.SimpleActionClient('/move_base/move', MoveBaseAction)
+    clear_octo_client = rospy.ServiceProxy('/clear_octomap', Empty)
     #navclient.wait_for_server()
 
-     ##FIXING TF TO MAP ( ODOM REALLY)    
-    static_transformStamped = TransformStamped()
-
-    static_transformStamped.header.stamp = rospy.Time.now()
-    static_transformStamped.header.frame_id = "map"
-    static_transformStamped.child_frame_id = "Drawer_high" 
-    static_transformStamped.transform.translation.x = 0.14
-    static_transformStamped.transform.translation.y = -0.344
-    static_transformStamped.transform.translation.z = 0.57
-    static_transformStamped.transform.rotation.x = 0    
-    static_transformStamped.transform.rotation.y = 0    
-    static_transformStamped.transform.rotation.z = 0    
-    static_transformStamped.transform.rotation.w = 1    
-
-    tf_static_broadcaster.sendTransform(static_transformStamped)
+   
 
     
     
@@ -361,8 +387,8 @@ if __name__== '__main__':
 
     with sm:
         #State machine for grasping on Floor
-        smach.StateMachine.add("INITIAL",       Initial(),      transitions = {'failed':'INITIAL',      'succ':'GOTO_TABLE',    'tries':'INITIAL'}) 
-        smach.StateMachine.add("GOTO_TABLE",    Goto_table(),   transitions = {'failed':'GOTO_TABLE',   'succ':'SCAN_TABLE',     'tries':'INITIAL'},remapping={'counter_in':'sm_counter','counter_out':'sm_counter'})
+        smach.StateMachine.add("INITIAL",       Initial(),      transitions = {'failed':'INITIAL',      'succ':'GOTO_TABLE',    'tries':'END'}) 
+        smach.StateMachine.add("GOTO_TABLE",    Goto_table(),   transitions = {'failed':'GOTO_TABLE',   'succ':'SCAN_TABLE',     'tries':'INITIAL', 'end':'END'},remapping={'counter_in':'sm_counter','counter_out':'sm_counter'})
         smach.StateMachine.add("SCAN_TABLE",    Scan_table(),   transitions = {'failed':'SCAN_TABLE',   'succ':'GOTO_PERSON',     'tries':'INITIAL'},remapping={'counter_in':'sm_counter','counter_out':'sm_counter'})
         smach.StateMachine.add("GOTO_PERSON",    Goto_person(),   transitions = {'failed':'GOTO_PERSON',   'succ':'GIVE_OBJECT',     'tries':'INITIAL'},remapping={'counter_in':'sm_counter','counter_out':'sm_counter'})
         smach.StateMachine.add("GIVE_OBJECT",    Give_object(),   transitions = {'failed':'GIVE_OBJECT',   'succ':'END',     'tries':'INITIAL'},remapping={'counter_in':'sm_counter','counter_out':'sm_counter'})
