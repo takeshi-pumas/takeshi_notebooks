@@ -143,6 +143,8 @@ class Initial(smach.State):
         rospy.loginfo('STATE : robot neutral pose')
         print('Try',self.tries,'of 5 attepmpts') 
         self.tries+=1
+        if self.tries==3:
+            return 'tries'
         clear_octo_client()
         scene.remove_world_object()
         #Takeshi neutral
