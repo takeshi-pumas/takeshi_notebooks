@@ -3,7 +3,7 @@ import rospy                                      # the main module for ROS-pyth
 from std_srvs.srv import Trigger, TriggerResponse # we are creating a 'Trigger service'...
 from tmc_tabletop_segmentator.srv import TabletopSegmentation
 from tmc_tabletop_segmentator.srv import TabletopSegmentationRequest
-from utils_server import *
+from utils_srv import *
 
                                                   # ...Other types are available, and you can create
                                                   # custom types
